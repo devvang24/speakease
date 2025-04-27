@@ -1,0 +1,30 @@
+{
+  "name": "electron-hot-reload-app",
+  "version": "1.0.0",
+  "description": "Electron application with hot reloading",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "nodemon --watch main.js --exec electron ."
+  },
+  "keywords": [
+    "electron",
+    "hot-reload"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^28.1.0",
+    "electron-reloader": "^1.2.3",
+    "nodemon": "^3.0.2"
+  },
+  "dependencies": {
+    "clipboardy": "^4.0.0",
+    "dotenv": "^16.5.0",
+    "keysender": "^2.3.0",
+    "mic": "^2.1.2",
+    "node-electron-clipboard": "^0.2.0",
+    "node-key-sender": "^1.0.11",
+    "openai": "^4.96.0"
+  }
+}
