@@ -74,7 +74,21 @@ function stopMicRecordingAndTranscribe() {
         file: fs.createReadStream(outputFile),
         model: 'whisper-1'
       });
-      console.log('Whisper STT transcript:', resp.text);
+      const transcript = resp.text;
+      console.log('Whisper STT transcript:', transcript);
+      // Inject transcript at cursor position
+      clipboard.writeText(transcript);
+      console.log('Transcript copied to clipboard');
+      console.log('Waiting 30ms before sending Ctrl+V to paste transcript...');
+      setTimeout(async () => {
+        try {
+          console.log('About to send Ctrl+V using node-key-sender for transcript');
+          await keySender.sendCombination(['control', 'v']);
+          console.log('Transcript paste command sent');
+        } catch (err) {
+          console.error('Error sending paste for transcript:', err);
+        }
+      }, 30);
     } catch (err) {
       console.error('Whisper API error:', err.response?.data || err.message);
     } finally {
