@@ -6,6 +6,8 @@ const path = require('path');
 const keySender = require('node-key-sender');
 const whisper = require('./whisper-transcript');
 
+let mainWin, pillWin;
+
 // Hot-reload (dev only)
 try {
   require('electron-reloader')(module, {
@@ -15,11 +17,12 @@ try {
   console.log('Hot-reload enabled');
 } catch (_) { console.log('Hot-reload disabled'); }
 
-function createWindow() {
+function createMain() {
   console.log('Creating main window...');
-  const mainWindow = new BrowserWindow({
+  mainWin = new BrowserWindow({
     width: 800,
     height: 600,
+    show: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -27,9 +30,30 @@ function createWindow() {
     }
   });
 
-  mainWindow.loadFile('index.html');
-  mainWindow.webContents.openDevTools(); // remove in prod
+  mainWin.loadFile('index.html');
+  mainWin.webContents.openDevTools(); // remove in prod
   console.log('Main window created and DevTools opened');
+}
+
+function createPill() {
+  console.log('Creating pill window...');
+  pillWin = new BrowserWindow({
+    width: 100,
+    height: 100,
+    x: 50,
+    y: 50,
+    frame: false,
+    transparent: true,
+    alwaysOnTop: true,
+    resizable: false,
+    webPreferences: {
+      preload: path.join(__dirname, 'pill-preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false
+    }
+  });
+  pillWin.loadFile('pill.html');
+  console.log('Pill window created');
 }
 
 const DUMMY_TEXT = "This is a sample 100-word paragraph that will be copied to the clipboard and pasted wherever your cursor is currently positioned. It's a basic test to demonstrate how NodeKeySender works along with clipboardy (or Electron's clipboard) in an Electron app. No need to use nut.js or other libraries—just click the button, and this paragraph should appear instantly at your cursor location in any focused application.";
@@ -99,7 +123,8 @@ function stopMicRecordingAndTranscribe() {
 
 app.whenReady().then(() => {
   console.log('App is ready');
-  createWindow();
+  createMain();
+  createPill();
 
   // Register global hotkey
   const hotkey1 = 'Control+Shift+V';
@@ -187,4 +212,10 @@ ipcMain.on('start-whisper-stt', async () => {
   } catch (err) {
     console.error('Error in Whisper STT:', err);
   }
+});
+
+ipcMain.on('open-main', () => {
+  if (!mainWin) createMain();
+  mainWin.show();
+  mainWin.focus();
 });

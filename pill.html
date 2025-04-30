@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        html, body {
+            margin: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0);
+        }
+        #pill {
+            width: 100%; height: 100%;
+            border-radius: 50px;             /* pill shape */
+            background: #007aff;
+            -webkit-app-region: drag;        /* make entire area draggable */
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+        }
+        #pill * { -webkit-app-region: no-drag } /* allow clicks */
+    </style>
+</head>
+<body>
+    <div id="pill">
+        <button id="open">⚙️</button>
+    </div>
+    <script>
+        document.getElementById('open').addEventListener('click', () => {
+            window.electronAPI.openMain()
+        })
+    </script>
+</body>
+</html> 

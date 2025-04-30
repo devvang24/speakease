@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Speech to Text Settings</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: transparent;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: #fff;
+        }
+
+        .settings-container {
+            width: 100%;
+            max-width: 600px;
+            background: rgba(30, 30, 30, 0.95);
+            border-radius: 20px;
+            padding: 24px;
+            margin: 20px auto;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .settings-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+        }
+
+        .settings-title {
+            font-size: 1.5em;
+            font-weight: 500;
+            margin: 0;
+        }
+
+        .close-button {
+            background: none;
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            transition: background 0.2s;
+        }
+
+        .close-button:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .close-button svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
+
+        /* API Key styles */
+        .api-key-container {
+            margin-bottom: 24px;
+        }
+
+        .api-key-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .api-key-title {
+            font-size: 1.2em;
+            font-weight: 500;
+            margin: 0;
+        }
+
+        .api-key-input-container {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .api-key-input {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 12px;
+            color: #fff;
+            font-size: 0.9em;
+            transition: all 0.2s;
+        }
+
+        .api-key-input:focus {
+            outline: none;
+            border-color: rgba(255, 255, 255, 0.4);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .api-key-button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 12px 24px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.2s;
+        }
+
+        .api-key-button:hover {
+            background: #45a049;
+        }
+
+        .api-key-help {
+            font-size: 0.85em;
+            opacity: 0.8;
+            margin-top: 8px;
+        }
+
+        .api-key-help a {
+            color: #4CAF50;
+            text-decoration: none;
+        }
+
+        .api-key-help a:hover {
+            text-decoration: underline;
+        }
+
+        .api-key-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 12px;
+            font-size: 0.9em;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #e53935;
+        }
+
+        .status-dot.valid {
+            background: #4CAF50;
+        }
+
+        /* Hotkey styles */
+        .hotkey-container {
+            margin-bottom: 24px;
+        }
+
+        .hotkey-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .hotkey-title {
+            font-size: 1.2em;
+            font-weight: 500;
+            margin: 0;
+        }
+
+        .hotkey-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .hotkey-item:last-child {
+            border-bottom: none;
+        }
+
+        .hotkey-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .hotkey-input {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 8px 12px;
+            color: #fff;
+            font-size: 0.9em;
+            min-width: 120px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .hotkey-input:focus {
+            outline: none;
+            border-color: rgba(255, 255, 255, 0.4);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .hotkey-input.recording {
+            border-color: #e53935;
+            background: rgba(229, 57, 53, 0.1);
+        }
+
+        .hotkey-reset {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.8em;
+            transition: background 0.2s;
+            margin-left: 12px;
+        }
+
+        .hotkey-reset:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .hotkey-help {
+            font-size: 0.85em;
+            opacity: 0.8;
+            margin-top: 16px;
+        }
+
+        /* Language styles */
+        .language-container {
+            margin-bottom: 24px;
+        }
+
+        .language-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .language-title {
+            font-size: 1.2em;
+            font-weight: 500;
+            margin: 0;
+        }
+
+        .language-select {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: #fff;
+            padding: 8px 12px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background 0.2s;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 8px center;
+            background-size: 12px;
+            padding-right: 30px;
+        }
+
+        .language-select:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .language-select option {
+            background: #1a1a1a;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="settings-container">
+        <div class="settings-header">
+            <h2 class="settings-title">Settings</h2>
+            <button class="close-button" id="closeSettings">
+                <svg viewBox="0 0 24 24">
+                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                </svg>
+            </button>
+        </div>
+
+        <div class="api-key-container">
+            <div class="api-key-header">
+                <h2 class="api-key-title">OpenAI API Key</h2>
+            </div>
+            <div class="api-key-input-container">
+                <input type="password" class="api-key-input" id="apiKeyInput" placeholder="sk-..." />
+                <button class="api-key-button" id="saveApiKeyButton">Save</button>
+            </div>
+            <div class="api-key-help">
+                Don't have an API key? Get one from <a href="https://platform.openai.com/api-keys" target="_blank">OpenAI</a>
+            </div>
+            <div class="api-key-status" id="apiKeyStatus">
+                <div class="status-dot"></div>
+                <span>API Key not configured</span>
+            </div>
+        </div>
+
+        <div class="hotkey-container">
+            <div class="hotkey-header">
+                <h2 class="hotkey-title">Global Hotkeys</h2>
+            </div>
+            <div class="hotkey-item">
+                <span class="hotkey-label">Start/Stop Recording</span>
+                <div style="display: flex; align-items: center;">
+                    <input type="text" class="hotkey-input" id="recordingHotkey" value="Control+;" readonly />
+                    <button class="hotkey-reset" id="resetRecordingHotkey">Reset</button>
+                </div>
+            </div>
+            <div class="hotkey-item">
+                <span class="hotkey-label">Quick Paste</span>
+                <div style="display: flex; align-items: center;">
+                    <input type="text" class="hotkey-input" id="pasteHotkey" value="Control+Shift+V" readonly />
+                    <button class="hotkey-reset" id="resetPasteHotkey">Reset</button>
+                </div>
+            </div>
+            <div class="hotkey-help">
+                Click on a hotkey to change it. Press Escape to cancel recording.
+            </div>
+        </div>
+
+        <div class="language-container">
+            <div class="language-header">
+                <h2 class="language-title">Language</h2>
+            </div>
+            <select class="language-select" id="languageSelect">
+                <option value="en">English</option>
+                <option value="es">Spanish</option>
+                <option value="fr">French</option>
+                <option value="de">German</option>
+                <option value="it">Italian</option>
+                <option value="pt">Portuguese</option>
+                <option value="ru">Russian</option>
+                <option value="ja">Japanese</option>
+                <option value="ko">Korean</option>
+                <option value="zh">Chinese</option>
+            </select>
+        </div>
+    </div>
+
+    <script src="renderer.js"></script>
+</body>
+</html> 
