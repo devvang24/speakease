@@ -22,6 +22,17 @@
             height: 28px;
             border-radius: 14px;
         }
+
+        /* Animation for recording state - only changing background color */
+        @keyframes colorPulse {
+            0% { background-color: #007aff; }
+            50% { background-color: #ff3b30; }
+            100% { background-color: #007aff; }
+        }
+
+        .recording {
+            animation: colorPulse 1.5s ease-in-out infinite;
+        }
     </style>
 </head>
 <body>
@@ -32,6 +43,16 @@
         document.getElementById('open').addEventListener('click', () => {
             window.electronAPI.openMain()
         })
+
+        // Register for recording status updates
+        window.electronAPI.onRecordingStatusChange((isRecording) => {
+            const pill = document.getElementById('pill');
+            if (isRecording) {
+                pill.classList.add('recording');
+            } else {
+                pill.classList.remove('recording');
+            }
+        });
     </script>
 </body>
 </html> 

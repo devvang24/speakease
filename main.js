@@ -85,12 +85,23 @@ function startMicRecording() {
   });
   micInstance.start();
   console.log('Global Hotkey: Recording started...');
+  
+  // Notify pill window about recording status
+  if (pillWin) {
+    pillWin.webContents.send('recording-status-change', true);
+  }
 }
 
 function stopMicRecordingAndTranscribe() {
   if (!micInstance) return;
   micInstance.stop();
   console.log('Global Hotkey: Recording stopped.');
+  
+  // Notify pill window about recording status
+  if (pillWin) {
+    pillWin.webContents.send('recording-status-change', false);
+  }
+  
   outputFileStream.on('finish', async () => {
     try {
       console.log('Sending audio to Whisper...');
