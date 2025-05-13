@@ -8,13 +8,20 @@
         }
         #pill {
             width: 100%; height: 100%;
-            border-radius: 50px;             /* pill shape */
+            border-radius: 25px;             /* pill shape, was 50px */
             background: #007aff;
             -webkit-app-region: drag;        /* make entire area draggable */
             display: flex; align-items: center; justify-content: center;
             cursor: pointer;
+            /* No change to width/height here, as it matches window size */
         }
         #pill * { -webkit-app-region: no-drag } /* allow clicks */
+        #open {
+            font-size: 1em; /* scale down button icon */
+            width: 28px;
+            height: 28px;
+            border-radius: 14px;
+        }
     </style>
 </head>
 <body>

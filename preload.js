@@ -10,5 +10,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   startWhisperSTT: () => {
     console.log('preload: startWhisperSTT called');
     ipcRenderer.send('start-whisper-stt');
-  }
+  },
+  setMicrophone: (deviceId) => ipcRenderer.send('set-microphone', deviceId),
+  setLanguage: (language) => ipcRenderer.send('set-language', language),
+  setHotkey: (hotkey) => ipcRenderer.send('set-hotkey', hotkey),
+  setOutputFormat: (format) => ipcRenderer.send('set-output-format', format),
+  configureEngine: () => ipcRenderer.send('configure-engine'),
+  navigateToHome: () => ipcRenderer.send('navigate-to-home')
 }); 

@@ -38,8 +38,8 @@ function createMain() {
 function createPill() {
   console.log('Creating pill window...');
   pillWin = new BrowserWindow({
-    width: 100,
-    height: 100,
+    width: 50,
+    height: 50,
     x: 50,
     y: 50,
     frame: false,
