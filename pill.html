@@ -11,16 +11,42 @@
             border-radius: 25px;             /* pill shape, was 50px */
             background: #007aff;
             -webkit-app-region: drag;        /* make entire area draggable */
-            display: flex; align-items: center; justify-content: center;
+            display: flex;
+            align-items: flex-start;
+            justify-content: flex-end;
             cursor: pointer;
+            position: relative;
             /* No change to width/height here, as it matches window size */
         }
         #pill * { -webkit-app-region: no-drag } /* allow clicks */
         #open {
-            font-size: 1em; /* scale down button icon */
-            width: 28px;
-            height: 28px;
-            border-radius: 14px;
+            width: 27px;
+            height: 27px;
+            border: none;
+            background: none;
+            border-radius: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s, box-shadow 0.2s;
+            box-shadow: none;
+            cursor: pointer;
+            padding: 0;
+            margin: 7px 7px 0 0;
+            position: absolute;
+            top: 0;
+            right: 0;
+        }
+        #open:hover {
+            background: none;
+            box-shadow: none;
+        }
+        #open svg {
+            width: 13px;
+            height: 13px;
+            display: block;
+            fill: #fff;
+            opacity: 0.6;
         }
 
         /* Animation for recording state - only changing background color */
@@ -33,11 +59,36 @@
         .recording {
             animation: colorPulse 1.5s ease-in-out infinite;
         }
+
+        #mic {
+            position: absolute;
+            bottom: 7px;
+            left: 7px;
+            top: auto;
+            right: auto;
+            transform: none;
+            width: 22px;
+            height: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #mic svg {
+            width: 22px;
+            height: 22px;
+            fill: #fff;
+            opacity: 0.92;
+        }
     </style>
 </head>
 <body>
     <div id="pill">
-        <button id="open">⚙️</button>
+        <button id="open" aria-label="Settings">
+            <svg viewBox="0 0 24 24"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94l-0.36-2.54C14.96,2.17,14.76,2,14.52,2h-3.84c-0.24,0-0.43,0.17-0.47,0.41l-0.36,2.54c-0.59,0.24-1.13,0.57-1.62,0.94l-2.39-0.96c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87c-0.12,0.21-0.08,0.47,0.12,0.61l2.03,1.58c-0.05,0.3-0.07,0.62-0.07,0.94s0.02,0.64,0.07,0.94l-2.03,1.58c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>
+        </button>
+        <div id="mic">
+            <svg viewBox="0 0 32 22"><rect x="1" y="8" width="3" height="6" rx="1.5"/><rect x="7" y="4" width="3" height="14" rx="1.5"/><rect x="13" y="1" width="3" height="20" rx="1.5"/><rect x="19" y="4" width="3" height="14" rx="1.5"/><rect x="25" y="8" width="3" height="6" rx="1.5"/></svg>
+        </div>
     </div>
     <script>
         document.getElementById('open').addEventListener('click', () => {
