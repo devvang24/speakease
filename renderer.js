@@ -7,7 +7,10 @@ const microphoneSelect = document.getElementById('microphone-select');
 const languageSelect = document.getElementById('language-select');
 const hotkeyButton = document.getElementById('hotkey-button');
 const outputFormatSelect = document.getElementById('output-format');
-const configureEngineButton = document.getElementById('configure-engine');
+const apiKeyInput = document.getElementById('apiKeyInput');
+const saveApiKeyButton = document.getElementById('saveApiKeyButton');
+const apiKeyStatus = document.getElementById('apiKeyStatus');
+const removeApiKeyButton = document.getElementById('removeApiKeyButton');
 
 // Initialize microphone devices
 async function initializeMicrophones() {
@@ -83,11 +86,6 @@ outputFormatSelect.addEventListener('change', (e) => {
     localStorage.setItem('outputFormat', selectedFormat);
 });
 
-configureEngineButton.addEventListener('click', () => {
-    // Open configuration dialog or navigate to engine settings
-    console.log('Configure engine clicked');
-});
-
 // Navigation
 document.querySelector('.nav-item.home').addEventListener('click', () => {
     // Navigate to home/main view
@@ -119,3 +117,58 @@ if (recordBtn) {
     window.electronAPI.startWhisperSTT();
   });
 }
+
+async function getApiKey() {
+  if (window.electronAPI && window.electronAPI.getApiKey) {
+    return await window.electronAPI.getApiKey();
+  } else if (window.require) {
+    const { ipcRenderer } = require('electron');
+    return await ipcRenderer.invoke('get-api-key');
+  }
+  return null;
+}
+
+async function setApiKey(key) {
+  if (window.electronAPI && window.electronAPI.setApiKey) {
+    await window.electronAPI.setApiKey(key);
+  } else if (window.require) {
+    const { ipcRenderer } = require('electron');
+    await ipcRenderer.invoke('set-api-key', key);
+  }
+}
+
+async function updateApiKeyStatus() {
+  const key = await getApiKey();
+  if (key) {
+    apiKeyStatus.textContent = 'API Key configured';
+    apiKeyStatus.style.color = '#4CAF50';
+    apiKeyInput.value = '';
+  } else {
+    apiKeyStatus.textContent = 'API Key not configured';
+    apiKeyStatus.style.color = '#e53935';
+    apiKeyInput.value = '';
+  }
+}
+
+saveApiKeyButton.addEventListener('click', async () => {
+  const key = apiKeyInput.value.trim();
+  await setApiKey(key);
+  updateApiKeyStatus();
+});
+
+async function removeApiKey() {
+  if (window.electronAPI && window.electronAPI.removeApiKey) {
+    await window.electronAPI.removeApiKey();
+  } else if (window.require) {
+    const { ipcRenderer } = require('electron');
+    await ipcRenderer.invoke('remove-api-key');
+  }
+}
+
+removeApiKeyButton.addEventListener('click', async () => {
+  await removeApiKey();
+  updateApiKeyStatus();
+});
+
+// On load
+updateApiKeyStatus();

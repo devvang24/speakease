@@ -16,5 +16,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   setHotkey: (hotkey) => ipcRenderer.send('set-hotkey', hotkey),
   setOutputFormat: (format) => ipcRenderer.send('set-output-format', format),
   configureEngine: () => ipcRenderer.send('configure-engine'),
-  navigateToHome: () => ipcRenderer.send('navigate-to-home')
+  navigateToHome: () => ipcRenderer.send('navigate-to-home'),
+  openSettings: () => ipcRenderer.send('open-settings'),
+  getApiKey: () => ipcRenderer.invoke('get-api-key'),
+  setApiKey: (key) => ipcRenderer.invoke('set-api-key', key),
+  removeApiKey: () => ipcRenderer.invoke('remove-api-key')
 }); 

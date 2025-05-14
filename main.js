@@ -1,12 +1,54 @@
 // main.js
 console.log('main.js loaded');
-
+const Mic = require('mic');
 const { app, BrowserWindow, ipcMain, clipboard, globalShortcut } = require('electron');
 const path = require('path');
 const keySender = require('node-key-sender');
 const whisper = require('./whisper-transcript');
+const fs = require('fs');
+const os = require('os');
 
 let mainWin, pillWin;
+let settingsWin = null;
+
+// Config file path for storing API key
+const configPath = path.join(app.getPath('userData'), 'config.json');
+
+function getApiKey() {
+  try {
+    if (fs.existsSync(configPath)) {
+      const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+      return config.apiKey || null;
+    }
+  } catch (e) { console.error('Error reading config:', e); }
+  return null;
+}
+
+function setApiKey(apiKey) {
+  try {
+    fs.writeFileSync(configPath, JSON.stringify({ apiKey }), 'utf-8');
+    console.log('API key set:', apiKey);
+  } catch (e) { console.error('Error writing config:', e); }
+}
+
+// IPC handlers for API key
+ipcMain.handle('get-api-key', () => getApiKey());
+ipcMain.handle('set-api-key', (event, apiKey) => {
+  setApiKey(apiKey);
+  updateOpenAIInstance();
+  if (pillWin) pillWin.webContents.send('api-key-status', !!apiKey);
+});
+
+ipcMain.handle('remove-api-key', () => {
+  try {
+    if (fs.existsSync(configPath)) {
+      fs.unlinkSync(configPath);
+      console.log('API key removed');
+    }
+  } catch (e) { console.error('Error removing config:', e); }
+  updateOpenAIInstance();
+  if (pillWin) pillWin.webContents.send('api-key-status', false);
+});
 
 // Hot-reload (dev only)
 try {
@@ -65,9 +107,14 @@ let outputFileStream = null;
 let outputFile = null;
 
 const OpenAI = require('openai');
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-const Mic = require('mic');
-const fs = require('fs');
+let openai = null;
+function updateOpenAIInstance() {
+  const apiKey = getApiKey();
+  console.log('API key loaded in updateOpenAIInstance:', apiKey);
+  if (apiKey) openai = new OpenAI({ apiKey });
+  else openai = null;
+}
+updateOpenAIInstance();
 
 function startMicRecording() {
   outputFile = 'recording.wav';
@@ -96,13 +143,13 @@ function stopMicRecordingAndTranscribe() {
   if (!micInstance) return;
   micInstance.stop();
   console.log('Global Hotkey: Recording stopped.');
-  
-  // Notify pill window about recording status
-  if (pillWin) {
-    pillWin.webContents.send('recording-status-change', false);
-  }
-  
+  if (pillWin) pillWin.webContents.send('recording-status-change', false);
   outputFileStream.on('finish', async () => {
+    if (!openai) {
+      console.error('No API key configured.');
+      if (pillWin) pillWin.webContents.send('api-key-status', false);
+      return;
+    }
     try {
       console.log('Sending audio to Whisper...');
       const resp = await openai.audio.transcriptions.create({
@@ -111,7 +158,6 @@ function stopMicRecordingAndTranscribe() {
       });
       const transcript = resp.text;
       console.log('Whisper STT transcript:', transcript);
-      // Inject transcript at cursor position
       clipboard.writeText(transcript);
       console.log('Transcript copied to clipboard');
       console.log('Waiting 30ms before sending Ctrl+V to paste transcript...');
@@ -136,6 +182,14 @@ app.whenReady().then(() => {
   console.log('App is ready');
   createMain();
   createPill();
+
+  // Check API key on startup
+  const apiKey = getApiKey();
+  if (!apiKey && pillWin) {
+    pillWin.webContents.once('did-finish-load', () => {
+      pillWin.webContents.send('api-key-status', false);
+    });
+  }
 
   // Register global hotkey
   const hotkey1 = 'Control+Shift+V';
@@ -229,4 +283,25 @@ ipcMain.on('open-main', () => {
   if (!mainWin) createMain();
   mainWin.show();
   mainWin.focus();
+});
+
+ipcMain.on('open-settings', () => {
+  if (settingsWin) {
+    settingsWin.focus();
+    return;
+  }
+  settingsWin = new BrowserWindow({
+    width: 500,
+    height: 600,
+    resizable: false,
+    modal: true,
+    parent: mainWin,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false
+    }
+  });
+  settingsWin.loadFile('settings.html');
+  settingsWin.on('closed', () => { settingsWin = null; });
 });

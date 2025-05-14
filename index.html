@@ -67,8 +67,18 @@
                     <label>Transcription Engine</label>
                     <div class="setting-row">
                         <span>OpenAI Whisper</span>
-                        <button id="configure-engine" class="button-secondary">Configure...</button>
                     </div>
+                </div>
+
+                <!-- API Key Settings (bottom) -->
+                <div class="setting-group" id="api-key-group">
+                    <label for="apiKeyInput">OpenAI API Key</label>
+                    <div style="display: flex; gap: 12px; align-items: center;">
+                        <input type="password" id="apiKeyInput" class="dropdown" placeholder="sk-..." style="flex:1;" />
+                        <button id="saveApiKeyButton" class="button-secondary">Save</button>
+                        <button id="removeApiKeyButton" class="button-secondary" style="background:#e53935;color:#fff;">Remove</button>
+                    </div>
+                    <div id="apiKeyStatus" style="margin-top: 8px; font-size: 0.95em; opacity: 0.8;"></div>
                 </div>
             </div>
         </div>

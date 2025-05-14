@@ -53,6 +53,24 @@
                 pill.classList.remove('recording');
             }
         });
+
+        // Listen for API key status from main process
+        if (window.electronAPI && window.electronAPI.onApiKeyStatus) {
+            window.electronAPI.onApiKeyStatus((configured) => {
+                if (!configured) {
+                    // Show a simple modal or alert for now
+                    alert('API key not configured. Please open settings and enter your OpenAI API key.');
+                }
+            });
+        } else if (window.require) {
+            // Fallback for direct IPC
+            const { ipcRenderer } = require('electron');
+            ipcRenderer.on('api-key-status', (event, configured) => {
+                if (!configured) {
+                    alert('API key not configured. Please open settings and enter your OpenAI API key.');
+                }
+            });
+        }
     </script>
 </body>
 </html> 

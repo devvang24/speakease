@@ -346,5 +346,39 @@
     </div>
 
     <script src="renderer.js"></script>
+    <script>
+      const { ipcRenderer } = window.require ? window.require('electron') : window.electronAPI || {};
+      // Fallback for contextBridge
+      const getApiKey = () => ipcRenderer.invoke('get-api-key');
+      const setApiKey = (key) => ipcRenderer.invoke('set-api-key', key);
+      
+      const apiKeyInput = document.getElementById('apiKeyInput');
+      const saveApiKeyButton = document.getElementById('saveApiKeyButton');
+      const apiKeyStatus = document.getElementById('apiKeyStatus');
+      const statusDot = apiKeyStatus.querySelector('.status-dot');
+      const statusText = apiKeyStatus.querySelector('span');
+
+      async function updateApiKeyStatus() {
+        const key = await getApiKey();
+        if (key) {
+          statusDot.classList.add('valid');
+          statusText.textContent = 'API Key configured';
+          apiKeyInput.value = key;
+        } else {
+          statusDot.classList.remove('valid');
+          statusText.textContent = 'API Key not configured';
+          apiKeyInput.value = '';
+        }
+      }
+
+      saveApiKeyButton.addEventListener('click', async () => {
+        const key = apiKeyInput.value.trim();
+        await setApiKey(key);
+        updateApiKeyStatus();
+      });
+
+      // On load
+      updateApiKeyStatus();
+    </script>
 </body>
 </html> 
