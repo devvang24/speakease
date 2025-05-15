@@ -19,6 +19,7 @@
     "nodemon": "^3.0.2"
   },
   "dependencies": {
+    "auto-launch": "^5.0.6",
     "clipboardy": "^4.0.0",
     "dotenv": "^16.5.0",
     "keysender": "^2.3.0",

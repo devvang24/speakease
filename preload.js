@@ -20,5 +20,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   openSettings: () => ipcRenderer.send('open-settings'),
   getApiKey: () => ipcRenderer.invoke('get-api-key'),
   setApiKey: (key) => ipcRenderer.invoke('set-api-key', key),
-  removeApiKey: () => ipcRenderer.invoke('remove-api-key')
+  removeApiKey: () => ipcRenderer.invoke('remove-api-key'),
+  getAutoStartStatus: () => ipcRenderer.invoke('get-auto-start'),
+  toggleAutoStart: () => ipcRenderer.invoke('toggle-auto-start'),
+  // Hotkey management
+  getHotkeys: () => ipcRenderer.invoke('get-hotkeys'),
+  setHotkey: (type, hotkey) => ipcRenderer.invoke('set-hotkey', { type, hotkey })
 }); 

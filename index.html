@@ -3,6 +3,125 @@
 <head>
     <title>SpeakEase - Settings</title>
     <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Hotkey Configuration Styles from settings.html */
+        .hotkey-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .hotkey-item:last-child {
+            border-bottom: none;
+        }
+
+        .hotkey-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .hotkey-input {
+            background: #f5f5f5;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 8px 12px;
+            color: #1a1a1a;
+            font-size: 0.9em;
+            min-width: 120px;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .hotkey-input:focus {
+            outline: none;
+            border-color: #ccc;
+            background: #fff;
+        }
+
+        .hotkey-input.recording {
+            border-color: #e53935;
+            background: rgba(229, 57, 53, 0.1);
+        }
+
+        .hotkey-button {
+            background: #f0f0f0;
+            border: 1px solid #e0e0e0;
+            color: #1a1a1a;
+            padding: 6px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.8em;
+            transition: background 0.2s;
+            margin-left: 8px;
+        }
+
+        .hotkey-button:hover {
+            background: #e8e8e8;
+        }
+
+        .hotkey-button.primary {
+            background: #4CAF50;
+            color: white;
+            border: none;
+        }
+
+        .hotkey-button.primary:hover {
+            background: #45a049;
+        }
+
+        .hotkey-reset {
+            background: #f0f0f0;
+            border: 1px solid #e0e0e0;
+            color: #1a1a1a;
+            padding: 6px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.8em;
+            transition: background 0.2s;
+            margin-left: 8px;
+        }
+
+        .hotkey-reset:hover {
+            background: #e8e8e8;
+        }
+
+        .hotkey-help {
+            font-size: 0.85em;
+            opacity: 0.8;
+            margin-top: 16px;
+        }
+
+        .hotkey-status {
+            font-size: 0.8em;
+            margin-top: 4px;
+            min-height: 16px;
+            opacity: 0.8;
+            transition: opacity 0.3s;
+        }
+        
+        .hotkey-status.success {
+            color: #4CAF50;
+        }
+        
+        .hotkey-status.error {
+            color: #e53935;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #e53935;
+            display: inline-block;
+            margin-right: 6px;
+        }
+
+        .status-dot.valid {
+            background: #4CAF50;
+        }
+    </style>
 </head>
 <body>
     <div class="app-container">
@@ -39,17 +158,60 @@
                 <div class="setting-group">
                     <label>Language</label>
                     <select id="language-select" class="dropdown">
-                        <option>English (United States)</option>
-                        <option>English (United Kingdom)</option>
-                        <option>Spanish (Spain)</option>
-                        <option>French (France)</option>
+                        <option value="en">English</option>
+                        <option value="es">Spanish</option>
+                        <option value="fr">French</option>
+                        <option value="de">German</option>
+                        <option value="it">Italian</option>
+                        <option value="pt">Portuguese</option>
+                        <option value="ru">Russian</option>
+                        <option value="ja">Japanese</option>
+                        <option value="ko">Korean</option>
+                        <option value="zh">Chinese</option>
                     </select>
                 </div>
 
                 <!-- Hotkey Settings -->
                 <div class="setting-group">
-                    <label>Hotkey</label>
-                    <button id="hotkey-button" class="button-secondary">Set Hotkey</button>
+                    <label>Global Hotkeys</label>
+                    <div class="hotkey-item">
+                        <span class="hotkey-label">Start/Stop Recording</span>
+                        <div style="display: flex; flex-direction: column; align-items: flex-end;">
+                            <div style="display: flex; align-items: center;">
+                                <input type="text" class="hotkey-input" id="recordingHotkey" value="Control+;" readonly />
+                                <button class="hotkey-button primary" id="setRecordingHotkey">Set</button>
+                                <button class="hotkey-reset" id="resetRecordingHotkey">Reset</button>
+                            </div>
+                            <div class="hotkey-status" id="recordingHotkeyStatus"></div>
+                        </div>
+                    </div>
+                    <div class="hotkey-item">
+                        <span class="hotkey-label">Quick Paste</span>
+                        <div style="display: flex; flex-direction: column; align-items: flex-end;">
+                            <div style="display: flex; align-items: center;">
+                                <input type="text" class="hotkey-input" id="pasteHotkey" value="Control+Shift+V" readonly />
+                                <button class="hotkey-button primary" id="setPasteHotkey">Set</button>
+                                <button class="hotkey-reset" id="resetPasteHotkey">Reset</button>
+                            </div>
+                            <div class="hotkey-status" id="pasteHotkeyStatus"></div>
+                        </div>
+                    </div>
+                    <div class="hotkey-item">
+                        <span class="hotkey-label">Quick Access</span>
+                        <div style="display: flex; flex-direction: column; align-items: flex-end;">
+                            <div style="display: flex; align-items: center;">
+                                <input type="text" class="hotkey-input" id="quickAccessHotkey" value="Control+/" readonly />
+                                <button class="hotkey-button primary" id="setQuickAccessHotkey">Set</button>
+                                <button class="hotkey-reset" id="resetQuickAccessHotkey">Reset</button>
+                            </div>
+                            <div class="hotkey-status" id="quickAccessHotkeyStatus"></div>
+                        </div>
+                    </div>
+                    <div class="hotkey-help">
+                        <p>Click <strong>Set</strong> to record a new hotkey combination. Press your desired keys simultaneously, then release.</p>
+                        <p>For example: Press <strong>Ctrl+Shift+P</strong> together to set that combination.</p>
+                        <p>Press <strong>Escape</strong> to cancel recording, or click <strong>Reset</strong> to restore the default.</p>
+                    </div>
                 </div>
 
                 <!-- Output Format -->
@@ -78,7 +240,10 @@
                         <button id="saveApiKeyButton" class="button-secondary">Save</button>
                         <button id="removeApiKeyButton" class="button-secondary" style="background:#e53935;color:#fff;">Remove</button>
                     </div>
-                    <div id="apiKeyStatus" style="margin-top: 8px; font-size: 0.95em; opacity: 0.8;"></div>
+                    <div id="apiKeyStatus" style="margin-top: 8px; font-size: 0.95em; opacity: 0.8;">
+                        <div class="status-dot"></div>
+                        <span>API Key not configured</span>
+                    </div>
                 </div>
             </div>
         </div>

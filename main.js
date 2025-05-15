@@ -7,10 +7,76 @@ const keySender = require('node-key-sender');
 const whisper = require('./whisper-transcript');
 const fs = require('fs');
 const os = require('os');
+const AutoLaunch = require('auto-launch');
 
 let mainWin, pillWin;
 let settingsWin = null;
 let tray = null;
+let isAutoStartEnabled = false;
+
+// Default hotkeys configuration
+const defaultHotkeys = {
+  recording: 'Control+;',
+  paste: 'Control+Shift+V',
+  quickAccess: 'Control+/'
+};
+
+// Create auto launcher
+const appAutoLauncher = new AutoLaunch({
+  name: 'SpeakEase',
+  path: app.getPath('exe'),
+});
+
+// Auto-start functions
+async function checkAutoLaunchStatus() {
+  try {
+    isAutoStartEnabled = await appAutoLauncher.isEnabled();
+    console.log('Auto-start status:', isAutoStartEnabled);
+    return isAutoStartEnabled;
+  } catch (error) {
+    console.error('Error checking auto-start status:', error);
+    return false;
+  }
+}
+
+async function toggleAutoStart() {
+  try {
+    isAutoStartEnabled = await appAutoLauncher.isEnabled();
+    if (isAutoStartEnabled) {
+      await appAutoLauncher.disable();
+      isAutoStartEnabled = false;
+      console.log('Auto-start disabled');
+    } else {
+      await appAutoLauncher.enable();
+      isAutoStartEnabled = true;
+      console.log('Auto-start enabled');
+    }
+    updateTrayMenu();
+    return isAutoStartEnabled;
+  } catch (error) {
+    console.error('Error toggling auto-start:', error);
+    return isAutoStartEnabled;
+  }
+}
+
+// Update the tray menu with current auto-start status
+function updateTrayMenu() {
+  if (!tray) return;
+  
+  const contextMenu = Menu.buildFromTemplate([
+    { label: 'Show Main Window', click: () => { if (!mainWin) createMain(); mainWin.show(); } },
+    { label: 'Show Pill', click: () => { if (pillWin) pillWin.show(); } },
+    { type: 'separator' },
+    { 
+      label: isAutoStartEnabled ? 'Disable Auto-start' : 'Enable Auto-start', 
+      click: async () => { await toggleAutoStart(); }
+    },
+    { type: 'separator' },
+    { label: 'Quit', click: () => { app.quit(); } }
+  ]);
+  
+  tray.setContextMenu(contextMenu);
+}
 
 // Config file path for storing API key
 const configPath = path.join(app.getPath('userData'), 'config.json');
@@ -27,9 +93,170 @@ function getApiKey() {
 
 function setApiKey(apiKey) {
   try {
-    fs.writeFileSync(configPath, JSON.stringify({ apiKey }), 'utf-8');
+    let config = {};
+    if (fs.existsSync(configPath)) {
+      config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+    }
+    config.apiKey = apiKey;
+    fs.writeFileSync(configPath, JSON.stringify(config), 'utf-8');
     console.log('API key set:', apiKey);
   } catch (e) { console.error('Error writing config:', e); }
+}
+
+// Function to get hotkeys from config
+function getHotkeys() {
+  try {
+    if (fs.existsSync(configPath)) {
+      const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+      return { ...defaultHotkeys, ...(config.hotkeys || {}) };
+    }
+  } catch (e) { console.error('Error reading config:', e); }
+  return defaultHotkeys;
+}
+
+// Function to save hotkeys to config
+function saveHotkeys(hotkeys) {
+  try {
+    let config = {};
+    if (fs.existsSync(configPath)) {
+      config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+    }
+    config.hotkeys = { ...config.hotkeys, ...hotkeys };
+    fs.writeFileSync(configPath, JSON.stringify(config), 'utf-8');
+    console.log('Hotkeys saved:', hotkeys);
+  } catch (e) { console.error('Error writing config:', e); }
+}
+
+// Global variables for hotkeys
+let registeredHotkeys = {};
+
+// Unregister all hotkeys
+function unregisterHotkeys() {
+  console.log('Unregistering all hotkeys');
+  globalShortcut.unregisterAll();
+  registeredHotkeys = {};
+}
+
+// Register hotkeys based on configuration
+function registerHotkeys() {
+  const hotkeys = getHotkeys();
+  console.log('Registering hotkeys:', hotkeys);
+  
+  // Register recording hotkey
+  registeredHotkeys.recording = globalShortcut.register(hotkeys.recording, () => {
+    if (!isRecording) {
+      isRecording = true;
+      startMicRecording();
+    } else {
+      isRecording = false;
+      stopMicRecordingAndTranscribe();
+    }
+  });
+  
+  // Register paste hotkey
+  registeredHotkeys.paste = globalShortcut.register(hotkeys.paste, () => {
+    console.log(`Global hotkey ${hotkeys.paste} triggered!`);
+    try {
+      clipboard.writeText(DUMMY_TEXT);
+      console.log('Clipboard write complete');
+      console.log('Waiting 30ms before sending Ctrl+V...');
+      setTimeout(async () => {
+        try {
+          console.log('About to send Ctrl+V using node-key-sender');
+          await keySender.sendCombination(['control', 'v']);
+          console.log('Paste command sent');
+        } catch (err) {
+          console.error('Error sending paste:', err);
+        }
+      }, 30);
+    } catch (err) {
+      console.error('Error in clipboard write or paste:', err);
+    }
+  });
+  
+  // Register quick access hotkey
+  registeredHotkeys.quickAccess = globalShortcut.register(hotkeys.quickAccess, () => {
+    console.log(`Global hotkey ${hotkeys.quickAccess} triggered!`);
+    try {
+      clipboard.writeText(DUMMY_TEXT);
+      console.log('Clipboard write complete');
+      console.log('Waiting 30ms before sending Ctrl+V...');
+      setTimeout(async () => {
+        try {
+          console.log('About to send Ctrl+V using node-key-sender');
+          await keySender.sendCombination(['control', 'v']);
+          console.log('Paste command sent');
+        } catch (err) {
+          console.error('Error sending paste:', err);
+        }
+      }, 30);
+    } catch (err) {
+      console.error('Error in clipboard write or paste:', err);
+    }
+  });
+  
+  // Log registration status
+  console.log('Hotkey registration status:');
+  for (const [type, registered] of Object.entries(registeredHotkeys)) {
+    if (registered) {
+      console.log(`Global hotkey ${hotkeys[type]} for ${type} registered successfully.`);
+    } else {
+      console.error(`Failed to register global hotkey ${hotkeys[type]} for ${type}.`);
+    }
+  }
+}
+
+// Update hotkeys
+function updateHotkey(type, newHotkey) {
+  if (!defaultHotkeys[type]) {
+    console.error(`Unknown hotkey type: ${type}`);
+    return false;
+  }
+  
+  // Validate the hotkey format
+  if (!isValidHotkey(newHotkey)) {
+    console.error(`Invalid hotkey format: ${newHotkey}`);
+    return false;
+  }
+  
+  const hotkeys = getHotkeys();
+  
+  // Check for duplicate hotkeys
+  for (const [existingType, existingHotkey] of Object.entries(hotkeys)) {
+    if (existingType !== type && existingHotkey === newHotkey) {
+      console.error(`Hotkey ${newHotkey} is already assigned to ${existingType}`);
+      return false;
+    }
+  }
+  
+  console.log(`Updating ${type} hotkey from ${hotkeys[type]} to ${newHotkey}`);
+  hotkeys[type] = newHotkey;
+  saveHotkeys(hotkeys);
+  
+  // Re-register hotkeys
+  unregisterHotkeys();
+  registerHotkeys();
+  
+  return true;
+}
+
+// Validate hotkey format
+function isValidHotkey(hotkey) {
+  // Basic format validation
+  if (!hotkey || typeof hotkey !== 'string') {
+    return false;
+  }
+  
+  const parts = hotkey.split('+').map(part => part.trim());
+  
+  // Ensure we have at least one key
+  if (parts.length === 0) {
+    return false;
+  }
+  
+  // Check if the hotkey is registerable in Electron
+  // This is a basic check, Electron might still reject some valid-looking combinations
+  return true;
 }
 
 // IPC handlers for API key
@@ -198,8 +425,15 @@ function stopMicRecordingAndTranscribe() {
   });
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   console.log('App is ready');
+
+  // Check auto-start status
+  await checkAutoLaunchStatus();
+  
+  // Log the current hotkeys
+  const currentHotkeys = getHotkeys();
+  console.log('Loaded hotkeys from config:', currentHotkeys);
 
   // Destroy old tray if it exists
   if (tray) {
@@ -215,14 +449,11 @@ app.whenReady().then(() => {
     console.error('Tray icon not found at:', iconPath);
   }
   tray = new Tray(iconPath);
-  const contextMenu = Menu.buildFromTemplate([
-    { label: 'Show Main Window', click: () => { if (!mainWin) createMain(); mainWin.show(); } },
-    { label: 'Show Pill', click: () => { if (pillWin) pillWin.show(); } },
-    { type: 'separator' },
-    { label: 'Quit', click: () => { app.quit(); } }
-  ]);
+  
+  // Create and set tray menu with auto-start option
+  updateTrayMenu();
+  
   tray.setToolTip('SpeakEase');
-  tray.setContextMenu(contextMenu);
   tray.on('click', () => { if (pillWin) pillWin.show(); });
   console.log('Tray icon created!');
 
@@ -243,77 +474,13 @@ app.whenReady().then(() => {
     });
   }
 
-  // Register global hotkey
-  const hotkey1 = 'Control+Shift+V';
-  const hotkey2 = 'Control+/';
-  const hotkey3 = 'Control+;';
-  const registered1 = globalShortcut.register(hotkey1, () => {
-    console.log(`Global hotkey ${hotkey1} triggered!`);
-    try {
-      clipboard.writeText(DUMMY_TEXT);
-      console.log('Clipboard write complete');
-      console.log('Waiting 30ms before sending Ctrl+V...');
-      setTimeout(async () => {
-        try {
-          console.log('About to send Ctrl+V using node-key-sender');
-          await keySender.sendCombination(['control', 'v']);
-          console.log('Paste command sent');
-        } catch (err) {
-          console.error('Error sending paste:', err);
-        }
-      }, 30);
-    } catch (err) {
-      console.error('Error in clipboard write or paste:', err);
-    }
-  });
-  const registered2 = globalShortcut.register(hotkey2, () => {
-    console.log(`Global hotkey ${hotkey2} triggered!`);
-    try {
-      clipboard.writeText(DUMMY_TEXT);
-      console.log('Clipboard write complete');
-      console.log('Waiting 30ms before sending Ctrl+V...');
-      setTimeout(async () => {
-        try {
-          console.log('About to send Ctrl+V using node-key-sender');
-          await keySender.sendCombination(['control', 'v']);
-          console.log('Paste command sent');
-        } catch (err) {
-          console.error('Error sending paste:', err);
-        }
-      }, 30);
-    } catch (err) {
-      console.error('Error in clipboard write or paste:', err);
-    }
-  });
-  const registered3 = globalShortcut.register(hotkey3, () => {
-    if (!isRecording) {
-      isRecording = true;
-      startMicRecording();
-    } else {
-      isRecording = false;
-      stopMicRecordingAndTranscribe();
-    }
-  });
-  if (registered1) {
-    console.log(`Global hotkey ${hotkey1} registered successfully.`);
-  } else {
-    console.error(`Failed to register global hotkey ${hotkey1}.`);
-  }
-  if (registered2) {
-    console.log(`Global hotkey ${hotkey2} registered successfully.`);
-  } else {
-    console.error(`Failed to register global hotkey ${hotkey2}.`);
-  }
-  if (registered3) {
-    console.log(`Global hotkey ${hotkey3} registered successfully.`);
-  } else {
-    console.error(`Failed to register global hotkey ${hotkey3}.`);
-  }
+  // Register global hotkeys
+  registerHotkeys();
 });
 
 app.on('will-quit', () => {
   console.log('App quitting, unregistering all global shortcuts.');
-  globalShortcut.unregisterAll();
+  unregisterHotkeys();
 });
 
 app.on('window-all-closed', (e) => {
@@ -343,8 +510,8 @@ ipcMain.on('open-settings', () => {
     return;
   }
   settingsWin = new BrowserWindow({
-    width: 500,
-    height: 600,
+    width: 600,
+    height: 680,
     resizable: false,
     modal: true,
     parent: mainWin,
@@ -354,9 +521,28 @@ ipcMain.on('open-settings', () => {
       nodeIntegration: false
     }
   });
-  settingsWin.loadFile('settings.html');
+  settingsWin.loadFile('index.html');
   settingsWin.on('closed', () => { settingsWin = null; });
 });
 
 // When quitting, set app.isQuitting = true so pill can close
 app.on('before-quit', () => { app.isQuitting = true; });
+
+// Add auto-start IPC handlers
+ipcMain.handle('get-auto-start', async () => {
+  return await checkAutoLaunchStatus();
+});
+
+ipcMain.handle('toggle-auto-start', async () => {
+  return await toggleAutoStart();
+});
+
+// Add hotkey IPC handlers
+ipcMain.handle('get-hotkeys', () => {
+  return getHotkeys();
+});
+
+ipcMain.handle('set-hotkey', (event, { type, hotkey }) => {
+  console.log(`Setting ${type} hotkey to ${hotkey}`);
+  return updateHotkey(type, hotkey);
+});
