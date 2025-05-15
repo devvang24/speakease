@@ -1,7 +1,7 @@
 // main.js
 console.log('main.js loaded');
 const Mic = require('mic');
-const { app, BrowserWindow, ipcMain, clipboard, globalShortcut } = require('electron');
+const { app, BrowserWindow, ipcMain, clipboard, globalShortcut, Tray, Menu } = require('electron');
 const path = require('path');
 const keySender = require('node-key-sender');
 const whisper = require('./whisper-transcript');
@@ -10,6 +10,7 @@ const os = require('os');
 
 let mainWin, pillWin;
 let settingsWin = null;
+let tray = null;
 
 // Config file path for storing API key
 const configPath = path.join(app.getPath('userData'), 'config.json');
@@ -65,6 +66,7 @@ function createMain() {
     width: 800,
     height: 600,
     show: false,
+    skipTaskbar: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -75,6 +77,14 @@ function createMain() {
   mainWin.loadFile('index.html');
   mainWin.webContents.openDevTools(); // remove in prod
   console.log('Main window created and DevTools opened');
+
+  // Minimize to tray on close
+  mainWin.on('close', (event) => {
+    if (!app.isQuitting) {
+      event.preventDefault();
+      mainWin.hide();
+    }
+  });
 }
 
 function createPill() {
@@ -95,7 +105,13 @@ function createPill() {
     }
   });
   pillWin.loadFile('pill.html');
-  console.log('Pill window created');
+  pillWin.on('close', (e) => {
+    if (!app.isQuitting) {
+      e.preventDefault();
+      pillWin.hide();
+    }
+  });
+  console.log('Pill window created!');
 }
 
 const DUMMY_TEXT = "This is a sample 100-word paragraph that will be copied to the clipboard and pasted wherever your cursor is currently positioned. It's a basic test to demonstrate how NodeKeySender works along with clipboardy (or Electron's clipboard) in an Electron app. No need to use nut.js or other libraries—just click the button, and this paragraph should appear instantly at your cursor location in any focused application.";
@@ -180,6 +196,26 @@ function stopMicRecordingAndTranscribe() {
 
 app.whenReady().then(() => {
   console.log('App is ready');
+
+  // Create Tray icon (use a real icon file)
+  console.log('Creating tray icon...');
+  const iconPath = path.join(__dirname, 'icon.png');
+  console.log('Tray icon path:', iconPath);
+  if (!fs.existsSync(iconPath)) {
+    console.error('Tray icon not found at:', iconPath);
+  }
+  tray = new Tray(iconPath);
+  const contextMenu = Menu.buildFromTemplate([
+    { label: 'Show Main Window', click: () => { if (!mainWin) createMain(); mainWin.show(); } },
+    { label: 'Show Pill', click: () => { if (pillWin) pillWin.show(); } },
+    { type: 'separator' },
+    { label: 'Quit', click: () => { app.quit(); } }
+  ]);
+  tray.setToolTip('SpeakEase');
+  tray.setContextMenu(contextMenu);
+  tray.on('click', () => { if (pillWin) pillWin.show(); });
+  console.log('Tray icon created!');
+
   createMain();
   createPill();
 
@@ -264,9 +300,9 @@ app.on('will-quit', () => {
   globalShortcut.unregisterAll();
 });
 
-app.on('window-all-closed', () => {
-  console.log('All windows closed');
-  if (process.platform !== 'darwin') app.quit();
+app.on('window-all-closed', (e) => {
+  e.preventDefault();
+  // Do nothing: keep app running in tray
 });
 
 ipcMain.on('start-whisper-stt', async () => {
@@ -305,3 +341,6 @@ ipcMain.on('open-settings', () => {
   settingsWin.loadFile('settings.html');
   settingsWin.on('closed', () => { settingsWin = null; });
 });
+
+// When quitting, set app.isQuitting = true so pill can close
+app.on('before-quit', () => { app.isQuitting = true; });
