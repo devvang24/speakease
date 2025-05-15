@@ -88,6 +88,10 @@ function createMain() {
 }
 
 function createPill() {
+  if (pillWin && !pillWin.isDestroyed()) {
+    pillWin.show();
+    return;
+  }
   console.log('Creating pill window...');
   pillWin = new BrowserWindow({
     width: 50,
@@ -197,6 +201,12 @@ function stopMicRecordingAndTranscribe() {
 app.whenReady().then(() => {
   console.log('App is ready');
 
+  // Destroy old tray if it exists
+  if (tray) {
+    tray.destroy();
+    tray = null;
+  }
+
   // Create Tray icon (use a real icon file)
   console.log('Creating tray icon...');
   const iconPath = path.join(__dirname, 'icon.png');
@@ -215,6 +225,12 @@ app.whenReady().then(() => {
   tray.setContextMenu(contextMenu);
   tray.on('click', () => { if (pillWin) pillWin.show(); });
   console.log('Tray icon created!');
+
+  // Destroy old pill window if it exists
+  if (pillWin && !pillWin.isDestroyed()) {
+    pillWin.close();
+    pillWin = null;
+  }
 
   createMain();
   createPill();
