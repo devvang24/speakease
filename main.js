@@ -329,8 +329,8 @@ function createMain() {
   });
 
   mainWin.loadFile('index.html');
-  mainWin.webContents.openDevTools(); // remove in prod
-  console.log('Main window created and DevTools opened');
+  // mainWin.webContents.openDevTools(); // Remove for production
+  console.log('Main window created');
 
   // Minimize to tray on close
   mainWin.on('close', (event) => {

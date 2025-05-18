@@ -1,1 +1,6 @@
-node_modules/ 
+node_modules/
+dist/
+.DS_Store
+*.wav
+.env
+config.json 

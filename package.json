@@ -1,20 +1,25 @@
 {
-  "name": "electron-hot-reload-app",
+  "name": "speakease",
   "version": "1.0.0",
-  "description": "Electron application with hot reloading",
+  "description": "Speech-to-text app with global hotkeys and floating UI",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "dev": "nodemon --watch main.js --exec electron ."
+    "dev": "nodemon --watch main.js --exec electron .",
+    "build": "electron-builder",
+    "build:win": "electron-builder --win"
   },
   "keywords": [
     "electron",
-    "hot-reload"
+    "speech-to-text",
+    "whisper",
+    "openai"
   ],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "devDependencies": {
     "electron": "^28.1.0",
+    "electron-builder": "^26.0.12",
     "electron-reloader": "^1.2.3",
     "nodemon": "^3.0.2"
   },
@@ -27,5 +32,26 @@
     "node-electron-clipboard": "^0.2.0",
     "node-key-sender": "^1.0.11",
     "openai": "^4.96.0"
+  },
+  "build": {
+    "appId": "com.speakease.app",
+    "productName": "SpeakEase",
+    "files": [
+      "**/*",
+      "!**/*.wav"
+    ],
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "icon": "icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "runAfterFinish": true
+    }
   }
 }
