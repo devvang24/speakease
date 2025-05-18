@@ -4,7 +4,6 @@ const Mic = require('mic');
 const { app, BrowserWindow, ipcMain, clipboard, globalShortcut, Tray, Menu } = require('electron');
 const path = require('path');
 const keySender = require('node-key-sender');
-const whisper = require('./whisper-transcript');
 const fs = require('fs');
 const os = require('os');
 const AutoLaunch = require('auto-launch');
@@ -65,7 +64,12 @@ function updateTrayMenu() {
   
   const contextMenu = Menu.buildFromTemplate([
     { label: 'Show Main Window', click: () => { if (!mainWin) createMain(); mainWin.show(); } },
-    { label: 'Show Pill', click: () => { if (pillWin) pillWin.show(); } },
+    { label: 'Reset Pill Position', click: () => { 
+      if (pillWin && !pillWin.isDestroyed()) {
+        pillWin.setPosition(50, 50);
+        savePillPosition({ x: 50, y: 50 });
+      }
+    }},
     { type: 'separator' },
     { 
       label: isAutoStartEnabled ? 'Disable Auto-start' : 'Enable Auto-start', 
@@ -125,6 +129,29 @@ function saveHotkeys(hotkeys) {
     fs.writeFileSync(configPath, JSON.stringify(config), 'utf-8');
     console.log('Hotkeys saved:', hotkeys);
   } catch (e) { console.error('Error writing config:', e); }
+}
+
+// Add position saving function after the existing getHotkeys and saveHotkeys functions
+function getPillPosition() {
+  try {
+    if (fs.existsSync(configPath)) {
+      const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+      return config.pillPosition || { x: 50, y: 50 };
+    }
+  } catch (e) { console.error('Error reading pill position:', e); }
+  return { x: 50, y: 50 };
+}
+
+function savePillPosition(position) {
+  try {
+    let config = {};
+    if (fs.existsSync(configPath)) {
+      config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+    }
+    config.pillPosition = position;
+    fs.writeFileSync(configPath, JSON.stringify(config), 'utf-8');
+    console.log('Pill position saved:', position);
+  } catch (e) { console.error('Error saving pill position:', e); }
 }
 
 // Global variables for hotkeys
@@ -319,15 +346,20 @@ function createPill() {
     pillWin.show();
     return;
   }
-  console.log('Creating pill window...');
+  
+  // Get saved position
+  const pillPosition = getPillPosition();
+  
+  console.log('Creating pill window at position:', pillPosition);
   pillWin = new BrowserWindow({
     width: 50,
     height: 50,
-    x: 50,
-    y: 50,
+    x: pillPosition.x,
+    y: pillPosition.y,
     frame: false,
     transparent: true,
     alwaysOnTop: true,
+    skipTaskbar: true, // Hide from taskbar
     resizable: false,
     webPreferences: {
       preload: path.join(__dirname, 'pill-preload.js'),
@@ -335,13 +367,24 @@ function createPill() {
       nodeIntegration: false
     }
   });
+  
   pillWin.loadFile('pill.html');
+  
+  // Store the position of the pill window when it's moved
+  pillWin.on('moved', () => {
+    const position = pillWin.getPosition();
+    savePillPosition({ x: position[0], y: position[1] });
+  });
+  
+  // IMPORTANT: Override the close event to prevent closing
+  // Only allow closing if app is quitting completely
   pillWin.on('close', (e) => {
     if (!app.isQuitting) {
       e.preventDefault();
-      pillWin.hide();
+      pillWin.show(); // Force show instead of hide
     }
   });
+  
   console.log('Pill window created!');
 }
 
@@ -379,6 +422,13 @@ function startMicRecording() {
   });
   micInstance.start();
   console.log('Global Hotkey: Recording started...');
+  
+  // Make sure the pill window exists and is visible
+  if (!pillWin || pillWin.isDestroyed()) {
+    createPill();
+  } else if (!pillWin.isVisible()) {
+    pillWin.show();
+  }
   
   // Notify pill window about recording status
   if (pillWin) {
@@ -454,7 +504,10 @@ app.whenReady().then(async () => {
   updateTrayMenu();
   
   tray.setToolTip('SpeakEase');
-  tray.on('click', () => { if (pillWin) pillWin.show(); });
+  tray.on('click', () => { 
+    if (!mainWin) createMain(); 
+    mainWin.show(); 
+  });
   console.log('Tray icon created!');
 
   // Destroy old pill window if it exists
@@ -485,17 +538,15 @@ app.on('will-quit', () => {
 
 app.on('window-all-closed', (e) => {
   e.preventDefault();
-  // Do nothing: keep app running in tray
+  // Ensure pill remains visible when all other windows are closed
+  if (pillWin && !pillWin.isVisible()) {
+    pillWin.show();
+  }
 });
 
 ipcMain.on('start-whisper-stt', async () => {
-  console.log('IPC: start-whisper-stt received');
-  try {
-    await whisper.recordAndTranscribe();
-    console.log('Whisper STT finished');
-  } catch (err) {
-    console.error('Error in Whisper STT:', err);
-  }
+  console.log('IPC: start-whisper-stt received - Functionality removed');
+  // This functionality has been removed - it was for testing/development only
 });
 
 ipcMain.on('open-main', () => {
