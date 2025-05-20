@@ -15,7 +15,8 @@ A productivity tool that converts your speech to text using OpenAI's Whisper API
 
 ### Windows
 
-1. Download the latest installer from the [Releases](https://github.com/yourusername/speakease/releases) page
+1. Download the latest installer from the 1. Download the latest installer from the [Releases](https://github.com/devvang24/speakease/releases) page.
+ page
 2. Run the installer and follow the prompts
 3. The app will start automatically after installation
 
